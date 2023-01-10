@@ -4027,6 +4027,15 @@ IF (T>=HRR_CLOCK(HRR_COUNTER(1))) THEN
    T_LAST_DUMP_HRR = T
 ENDIF
 
+! Dump out HRR info into CHID_hrr.csv
+
+IF (MY_RANK==0 .AND. HVAC_SOLVE .AND. (N_DUCT_QUANTITY > 0 .OR. N_NODE_QUANTITY > 0)) THEN
+   IF (T>=HVAC_CLOCK(HVAC_COUNTER(1))) THEN
+      CALL DUMP_HVAC(T) 
+      HVAC_COUNTER(1) = HVAC_COUNTER(1) + 1
+   ENDIF
+ENDIF
+
 ! Dump unstructured geometry and boundary element info
 
 IF (N_FACE>0 .AND. T>=GEOM_CLOCK(GEOM_COUNTER(1))) THEN

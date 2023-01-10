@@ -50,7 +50,6 @@ $QFDS -d Complex_Geometry geom_part_init.fds
 $QFDS -d Complex_Geometry geom_sphere1a.fds
 $QFDS -d Complex_Geometry geom_sphere1c.fds
 $QFDS -d Complex_Geometry geom_sphere1e.fds
-#$QFDS -d Complex_Geometry geom_sphere2.fds
 $QFDS -d Complex_Geometry geom_sphere3b.fds
 $QFDS -d Complex_Geometry geom_sphere3d.fds
 $QFDS -d Complex_Geometry geom_sphere3f.fds
@@ -251,7 +250,7 @@ $QFDS -d Heat_Transfer ht3d_energy_conservation_2.fds
 $QFDS -d Heat_Transfer ht3d_energy_conservation_3.fds
 $QFDS -d Heat_Transfer ht3d_ibeam.fds
 $QFDS -d Heat_Transfer ht3d_mass_conservation.fds
-$QFDS -d Heat_Transfer ht3d_network.fds
+$QFDS -p 2 -d Heat_Transfer ht3d_network.fds
 $QFDS -d Heat_Transfer ht3d_slab.fds
 $QFDS -d Heat_Transfer ht3d_sphere_24.fds
 $QFDS -p 8 -d Heat_Transfer ht3d_sphere_48.fds
