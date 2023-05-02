@@ -315,7 +315,7 @@ DATA (CPLXREF_FUEL( 94,J), J=1,3) / 10.0_EB, 1.45_EB, 8.24E-04_EB /
 
 END MODULE SPECDATA
 
-MODULE WSGG_ARRAYS   
+MODULE WSGG_ARRAYS
 USE PRECISION_PARAMETERS
 
 REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: WSGG_B1_ARRAY,WSGG_B2_ARRAY,WSGG_D_ARRAY
@@ -3354,7 +3354,7 @@ MAKE_WSGG_ARRAYS: IF (.NOT.SOLID_PHASE_ONLY .AND. WSGG_MODEL) THEN
    WSGG_C_ARRAY(4,2,0:4) = (/ -0.5055995_EB,  0.4579559_EB, -0.2616436_EB,  0.0764841_EB, -0.0079084_EB /)
    WSGG_C_ARRAY(4,3,0:4) = (/  0.2317509_EB, -0.1656759_EB,  0.1052608_EB, -0.0321935_EB,  0.0033870_EB /)
    WSGG_C_ARRAY(4,4,0:4) = (/ -0.0375491_EB,  0.0229520_EB, -0.0160047_EB,  0.0050463_EB, -0.0005364_EB /)
-   
+
    WSGG_KAPPAP1_ARRAY(1:5) = (/ 3.388079E-2_EB, 4.544269E-1_EB, 4.680226_EB, 1.038439E2_EB, 0._EB /)
 
    WSGG_KAPPAP2_ARRAY(1:5) = (/ 7.703541E-2_EB, 8.242941E-1_EB, 6.854761_EB, 6.593653E1_EB, 0._EB /)
@@ -3537,7 +3537,7 @@ ENDIF
 
 IF (RAD_ITER==RADIATION_ITERATIONS) RAD_CALL_COUNTER  = RAD_CALL_COUNTER + 1
 
-! If there is a user-specified HRRPUV on an INIT line, and there are multiple iterations of the radiation solver, 
+! If there is a user-specified HRRPUV on an INIT line, and there are multiple iterations of the radiation solver,
 ! subtract off the HRRPUV from Q, leaving just the chemical HRR.
 
 IF (INIT_HRRPUV .AND. RAD_ITER>1) CALL ADD_VOLUMETRIC_HEAT_SOURCE(2)
@@ -3904,7 +3904,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
          DO N=1,NRA
             DLA = (/DLX(N),DLY(N),DLZ(N)/)
             DLF = DOT_PRODUCT(CFA%NVEC,DLA) ! face normal * radiation angle
-            IF (DLF<0._EB) INRAD_F(ICF) = INRAD_F(ICF) - DLF*BR%BAND(IBND)%ILW(N)
+            IF (DLF<0._EB) INRAD_F(ICF) = INRAD_F(ICF) - CFA%DLF_FCTM*DLF*BR%BAND(IBND)%ILW(N)
          ENDDO
       ENDDO
 
@@ -4178,7 +4178,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                            CFA => CFACE(ICF)
                            IF (REAL(ISTEP,EB)*CFA%NVEC(IAXIS)>0._EB) THEN
                               BR  => BOUNDARY_RADIA(CFA%BR_INDEX)
-                              AFX      = ABS(CFA%NVEC(IAXIS))*CFA%AREA/(DY(J)*DZ(K))
+                              AFX      = ABS(CFA%NVEC(IAXIS))*CFA%AREA/(DY(J)*DZ(K))*CFA%DLF_FCTP
                               AFX_AUX  = AFX_AUX  + AFX
                               ILXU_AUX = ILXU_AUX + BR%BAND(IBND)%ILW(N)*AFX
                            ENDIF
@@ -4191,7 +4191,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                            CFA => CFACE(ICF)
                            IF (REAL(JSTEP,EB)*CFA%NVEC(JAXIS)>0._EB) THEN
                               BR  => BOUNDARY_RADIA(CFA%BR_INDEX)
-                              AFY      = ABS(CFA%NVEC(JAXIS))*CFA%AREA/(DX(I)*DZ(K))
+                              AFY      = ABS(CFA%NVEC(JAXIS))*CFA%AREA/(DX(I)*DZ(K))*CFA%DLF_FCTP
                               AFY_AUX  = AFY_AUX  + AFY
                               ILYU_AUX = ILYU_AUX + BR%BAND(IBND)%ILW(N)*AFY
                            ENDIF
@@ -4204,7 +4204,7 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                            CFA => CFACE(ICF)
                            IF (REAL(KSTEP,EB)*CFA%NVEC(KAXIS)>0._EB) THEN
                               BR  => BOUNDARY_RADIA(CFA%BR_INDEX)
-                              AFZ      = ABS(CFA%NVEC(KAXIS))*CFA%AREA/(DX(I)*DY(J))
+                              AFZ      = ABS(CFA%NVEC(KAXIS))*CFA%AREA/(DX(I)*DY(J))*CFA%DLF_FCTP
                               AFZ_AUX  = AFZ_AUX  + AFZ
                               ILZU_AUX = ILZU_AUX + BR%BAND(IBND)%ILW(N)*AFZ
                            ENDIF
@@ -4330,9 +4330,9 @@ BAND_LOOP: DO IBND = 1,NUMBER_SPECTRAL_BANDS
                   DLF = DOT_PRODUCT(CFA%NVEC,DLA) ! face normal * radiation angle
                   IF (DLF>=0._EB) CYCLE CFACE_LOOP2      ! outgoing
                   BR  => BOUNDARY_RADIA(CFA%BR_INDEX)
-                  INRAD_F(ICF) = INRAD_F(ICF) + DLF * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 1
+                  INRAD_F(ICF) = INRAD_F(ICF) + CFA%DLF_FCTM*DLF * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 1
                   BR%BAND(IBND)%ILW(N) = IL_F(ICF)
-                  INRAD_F(ICF) = INRAD_F(ICF) - DLF * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 2
+                  INRAD_F(ICF) = INRAD_F(ICF) - CFA%DLF_FCTM*DLF * BR%BAND(IBND)%ILW(N) ! update incoming rad, step 2
                ENDDO CFACE_LOOP2
             ENDIF
 
@@ -4757,4 +4757,4 @@ END MODULE RAD
 
 
 
-   
+
