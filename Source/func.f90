@@ -3325,6 +3325,38 @@ END SELECT
 
 END SUBROUTINE TRANSFORM_COORDINATES
 
+!> \brief Return face volumes for distribution of quantity onto faces
+!> \param NM Mesh number
+!> \param AXIS The axis for the face centered quantity
+!> \param I The lower x index
+!> \param J The lower y index
+!> \param K The lower z index
+!> \param FVOLS The face volumes
+
+SUBROUTINE GET_FACE_VOLUMES(NM,AXIS,I,J,K,FACE_VOLS)
+
+INTEGER, INTENT(IN) :: NM,AXIS,I,J,K
+INTEGER :: II,JJ,KK
+REAL(EB), INTENT(OUT) :: FACE_VOLS(2,2,2)
+TYPE (MESH_TYPE), POINTER :: M
+
+M => MESHES(NM)
+DO II=I,I+1
+   DO JJ=J,J+1
+      DO KK=K,K+1
+         IF (AXIS == 1) THEN
+            FACE_VOLS(II-I+1,JJ-J+1,KK-K+1)=M%DXN(II)*M%DY(JJ)*M%DZ(KK)
+         ELSEIF (AXIS == 2) THEN
+            FACE_VOLS(II-I+1,JJ-J+1,KK-K+1)=M%DX(II)*M%DYN(JJ)*M%DZ(KK)
+         ELSEIF (AXIS == 3) THEN
+            FACE_VOLS(II-I+1,JJ-J+1,KK-K+1)=M%DX(II)*M%DY(JJ)*M%DZN(KK)
+         ENDIF
+      ENDDO
+   ENDDO
+ENDDO
+
+END SUBROUTINE GET_FACE_VOLUMES
+
 END MODULE GEOMETRY_FUNCTIONS
 
 
@@ -3383,8 +3415,10 @@ END SUBROUTINE MESH_TO_PARTICLE
 
 
 !> \brief Linearly interpolate the value at a point onto the mesh
+!> \param NM Mesh number
 !> \param X The interpolated value of the 3D array
 !> \param A The 3D array of values
+!> \param V 3D array of volumes corresponding to A loactions
 !> \param I The lower x index of the array
 !> \param J The lower y index of the array
 !> \param K The lower z index of the array
@@ -3392,25 +3426,30 @@ END SUBROUTINE MESH_TO_PARTICLE
 !> \param R Fraction of the distance from the lower to upper y coordinate
 !> \param S Fraction of the distance from the lower to upper z coordinate
 
-SUBROUTINE PARTICLE_TO_MESH(X,A,I,J,K,P,R,S)
+SUBROUTINE PARTICLE_TO_MESH(X,A,V,I,J,K,P,R,S)
 
 REAL(EB), INTENT(INOUT), DIMENSION(0:,0:,0:) :: A
 INTEGER, INTENT(IN) :: I,J,K
-REAL(EB), INTENT(IN) :: P,R,S
-REAL(EB), INTENT(IN) :: X
-REAL(EB) :: PP,RR,SS
+REAL(EB), INTENT(IN) :: X,V(2,2,2),P,R,S
+REAL(EB) :: WGT(2,2,2),VWGT(2,2,2),PP,RR,SS
 
 PP = 1._EB-P
 RR = 1._EB-R
 SS = 1._EB-S
-A(I  ,J  ,K  ) = A(I  ,J  ,K  ) - X*PP*RR*SS
-A(I+1,J  ,K  ) = A(I+1,J  ,K  ) - X*P *RR*SS
-A(I  ,J+1,K  ) = A(I  ,J+1,K  ) - X*PP*R *SS
-A(I+1,J+1,K  ) = A(I+1,J+1,K  ) - X*P *R *SS
-A(I  ,J  ,K+1) = A(I  ,J  ,K+1) - X*PP*RR*S
-A(I+1,J  ,K+1) = A(I+1,J  ,K+1) - X*P *RR*S
-A(I  ,J+1,K+1) = A(I  ,J+1,K+1) - X*PP*R *S
-A(I+1,J+1,K+1) = A(I+1,J+1,K+1) - X*P *R *S
+
+WGT(1,1,1) = PP*RR*SS
+WGT(2,1,1) = P*RR*SS
+WGT(1,2,1) = PP*R*SS
+WGT(2,2,1) = P*R*SS
+WGT(1,1,2) = PP*RR*S
+WGT(2,1,2) = P*RR*S
+WGT(1,2,2) = PP*R*S
+WGT(2,2,2) = P*R*S
+
+VWGT = V*WGT
+VWGT=WGT/SUM(VWGT)
+
+A(I:I+1, J:J+1, K:K+1) = A(I:I+1, J:J+1, K:K+1) - X*VWGT
 
 END SUBROUTINE PARTICLE_TO_MESH
 
